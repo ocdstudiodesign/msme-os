@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PWA Installation Status - One MSME Hub</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Host Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #6C6CFF 0%, #4F4FBF 50%, #32327F 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    .container {
+      background: white;
+      border-radius: 24px;
+      padding: 40px;
+      max-width: 600px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+    
+    h1 {
+      color: #32327F;
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+    
+    .subtitle {
+      color: #666;
+      font-size: 16px;
+      margin-bottom: 30px;
+    }
+    
+    .status-card {
+      background: #f5f6ff;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-left: 4px solid #32327F;
+    }
+    
+    .status-card.success {
+      border-left-color: #00C853;
+      background: #E8F5E9;
+    }
+    
+    .status-card.warning {
+      border-left-color: #FFB300;
+      background: #FFF8E1;
+    }
+    
+    .status-card.error {
+      border-left-color: #FF5252;
+      background: #FFEBEE;
+    }
+    
+    .status-title {
+      font-weight: 600;
+      font-size: 18px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .status-desc {
+      color: #555;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    
+    .icon {
+      font-size: 24px;
+    }
+    
+    .install-btn {
+      background: #32327F;
+      color: white;
+      border: none;
+      padding: 16px 32px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 20px;
+      transition: all 0.3s;
+      display: none;
+    }
+    
+    .install-btn:hover {
+      background: #4141a0;
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(50, 50, 127, 0.3);
+    }
+    
+    .install-btn:active {
+      transform: translateY(0);
+    }
+    
+    .install-btn.show {
+      display: block;
+    }
+    
+    .instructions {
+      background: #f5f6ff;
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 20px;
+    }
+    
+    .instructions h3 {
+      color: #32327F;
+      font-size: 18px;
+      margin-bottom: 15px;
+    }
+    
+    .instructions ol {
+      padding-left: 20px;
+    }
+    
+    .instructions li {
+      color: #555;
+      line-height: 1.8;
+      margin-bottom: 8px;
+    }
+    
+    @media (max-width: 640px) {
+      .container {
+        padding: 24px;
+      }
+      
+      h1 {
+        font-size: 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📱 PWA Installation Status</h1>
+    <p class="subtitle">One MSME Hub Progressive Web App</p>
+    
+    <div id="status-container">
+      <!-- Status cards will be inserted here -->
+    </div>
+    
+    <button id="installBtn" class="install-btn">
+      📥 Install App Now
+    </button>
+    
+    <div class="instructions" id="instructions" style="display: none;">
+      <h3>How to Install:</h3>
+      <div id="instructionContent"></div>
+    </div>
+  </div>
+  
+  <script>
+    const statusContainer = document.getElementById('status-container');
+    const installBtn = document.getElementById('installBtn');
+    const instructions = document.getElementById('instructions');
+    const instructionContent = document.getElementById('instructionContent');
+    
+    let deferredPrompt;
+    
+    // Check PWA status
+    const checks = [];
+    
+    // 1. Check if running as installed app
+    const isInstalled = window.matchMedia('(display-mode: standalone)').matches || 
+                        window.navigator.standalone === true;
+    
+    if (isInstalled) {
+      checks.push({
+        type: 'success',
+        icon: '✅',
+        title: 'App is Installed!',
+        desc: 'You are running One MSME Hub as an installed app. Enjoy!'
+      });
+    } else {
+      checks.push({
+        type: 'warning',
+        icon: '📱',
+        title: 'Not Installed Yet',
+        desc: 'Install this app for the best experience.'
+      });
+    }
+    
+    // 2. Check HTTPS
+    if (location.protocol === 'https:' || location.hostname === 'localhost') {
+      checks.push({
+        type: 'success',
+        icon: '🔒',
+        title: 'Secure Connection',
+        desc: 'App is running on HTTPS - PWA features enabled.'
+      });
+    } else {
+      checks.push({
+        type: 'error',
+        icon: '⚠️',
+        title: 'Not Secure',
+        desc: 'PWA requires HTTPS. Deploy to a secure server.'
+      });
+    }
+    
+    // 3. Check Service Worker
+    if ('serviceWorker' in navigator) {
+      checks.push({
+        type: 'success',
+        icon: '⚙️',
+        title: 'Service Worker Supported',
+        desc: 'Your browser supports offline functionality.'
+      });
+      
+      navigator.serviceWorker.getRegistrations().then(registrations => {
+        if (registrations.length > 0) {
+          addStatusCard({
+            type: 'success',
+            icon: '✅',
+            title: 'Service Worker Active',
+            desc: 'Offline mode is enabled.'
+          });
+        }
+      });
+    } else {
+      checks.push({
+        type: 'error',
+        icon: '❌',
+        title: 'Service Worker Not Supported',
+        desc: 'Your browser does not support PWA features.'
+      });
+    }
+    
+    // 4. Check Manifest
+    fetch('/manifest.json')
+      .then(res => res.json())
+      .then(manifest => {
+        addStatusCard({
+          type: 'success',
+          icon: '📋',
+          title: 'Manifest Found',
+          desc: `App: ${manifest.name} - Ready to install!`
+        });
+      })
+      .catch(() => {
+        addStatusCard({
+          type: 'error',
+          icon: '❌',
+          title: 'Manifest Missing',
+          desc: 'PWA configuration not found.'
+        });
+      });
+    
+    // Display initial checks
+    checks.forEach(check => addStatusCard(check));
+    
+    // Handle install prompt
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      installBtn.classList.add('show');
+      
+      addStatusCard({
+        type: 'success',
+        icon: '🎉',
+        title: 'Installation Available!',
+        desc: 'Click the button below to install the app.'
+      });
+    });
+    
+    installBtn.addEventListener('click', async () => {
+      if (!deferredPrompt) {
+        showInstructions();
+        return;
+      }
+      
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      
+      if (outcome === 'accepted') {
+        addStatusCard({
+          type: 'success',
+          icon: '✅',
+          title: 'Installation Started!',
+          desc: 'The app is being installed...'
+        });
+      }
+      
+      deferredPrompt = null;
+      installBtn.classList.remove('show');
+    });
+    
+    window.addEventListener('appinstalled', () => {
+      addStatusCard({
+        type: 'success',
+        icon: '🎊',
+        title: 'Successfully Installed!',
+        desc: 'One MSME Hub is now on your home screen.'
+      });
+      installBtn.classList.remove('show');
+    });
+    
+    function addStatusCard(check) {
+      const card = document.createElement('div');
+      card.className = `status-card ${check.type}`;
+      card.innerHTML = `
+        <div class="status-title">
+          <span class="icon">${check.icon}</span>
+          ${check.title}
+        </div>
+        <div class="status-desc">${check.desc}</div>
+      `;
+      statusContainer.appendChild(card);
+    }
+    
+    function showInstructions() {
+      instructions.style.display = 'block';
+      
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      
+      if (isIOS) {
+        instructionContent.innerHTML = `
+          <ol>
+            <li>Tap the <strong>Share</strong> button (⬆️) at the bottom</li>
+            <li>Scroll down and tap <strong>"Add to Home Screen"</strong></li>
+            <li>Tap <strong>"Add"</strong> to confirm</li>
+            <li>Find the app icon on your home screen!</li>
+          </ol>
+        `;
+      } else {
+        instructionContent.innerHTML = `
+          <ol>
+            <li>Tap the <strong>Menu</strong> button (⋮) in your browser</li>
+            <li>Select <strong>"Install App"</strong> or <strong>"Add to Home Screen"</strong></li>
+            <li>Tap <strong>"Install"</strong> to confirm</li>
+            <li>Find the app icon on your home screen!</li>
+          </ol>
+        `;
+      }
+    }
+    
+    // Auto-show instructions if not installable
+    setTimeout(() => {
+      if (!installBtn.classList.contains('show') && !isInstalled) {
+        showInstructions();
+      }
+    }, 2000);
+  </script>
+</body>
+</html>
