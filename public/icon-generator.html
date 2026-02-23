@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>One MSME Hub Icon Generator</title>
+  <style>
+    body {
+      font-family: 'Host Grotesk', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: #f5f6ff;
+      padding: 20px;
+    }
+    .icon-preview {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 20px;
+      max-width: 800px;
+      margin: 20px 0;
+    }
+    .icon-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    canvas {
+      border-radius: 20%;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    button {
+      background: #32327F;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      margin: 10px;
+    }
+    button:hover {
+      background: #4141a0;
+    }
+    h1 {
+      color: #32327F;
+      margin-bottom: 10px;
+    }
+    p {
+      color: #666;
+      text-align: center;
+      max-width: 600px;
+    }
+  </style>
+</head>
+<body>
+  <h1>One MSME Hub - PWA Icon Generator</h1>
+  <p>These icons will be generated for your Progressive Web App. Click "Download All Icons" to save them.</p>
+  
+  <div class="icon-preview" id="iconPreview"></div>
+  
+  <button onclick="downloadAllIcons()">Download All Icons as ZIP</button>
+  
+  <script>
+    const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
+    
+    function createIcon(size) {
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      
+      // Gradient background (purple)
+      const gradient = ctx.createRadialGradient(size/2, size/2, 0, size/2, size/2, size);
+      gradient.addColorStop(0, '#6C6CFF');
+      gradient.addColorStop(0.5, '#4F4FBF');
+      gradient.addColorStop(1, '#32327F');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, size, size);
+      
+      // Draw MSME text/logo
+      ctx.fillStyle = 'white';
+      ctx.font = `bold ${size * 0.25}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('MSME', size/2, size/2.2);
+      
+      // Draw HUB text
+      ctx.font = `600 ${size * 0.15}px sans-serif`;
+      ctx.fillText('HUB', size/2, size/1.6);
+      
+      // Draw accent circle
+      ctx.beginPath();
+      ctx.arc(size * 0.8, size * 0.2, size * 0.08, 0, Math.PI * 2);
+      ctx.fillStyle = '#FED812';
+      ctx.fill();
+      
+      return canvas;
+    }
+    
+    function displayIcons() {
+      const preview = document.getElementById('iconPreview');
+      sizes.forEach(size => {
+        const canvas = createIcon(size);
+        const container = document.createElement('div');
+        container.className = 'icon-item';
+        
+        const label = document.createElement('div');
+        label.textContent = `${size}x${size}`;
+        label.style.fontWeight = 'bold';
+        label.style.color = '#32327F';
+        
+        container.appendChild(canvas);
+        container.appendChild(label);
+        preview.appendChild(container);
+      });
+    }
+    
+    function downloadAllIcons() {
+      sizes.forEach(size => {
+        const canvas = createIcon(size);
+        canvas.toBlob(blob => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `icon-${size}x${size}.png`;
+          a.click();
+          URL.revokeObjectURL(url);
+        });
+      });
+      alert('Downloading all icons! Please save them to /public/icons/ folder.');
+    }
+    
+    displayIcons();
+  </script>
+</body>
+</html>
